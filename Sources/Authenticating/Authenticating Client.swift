@@ -110,22 +110,18 @@ extension Authenticating {
         public subscript<T>(dynamicMember keyPath: KeyPath<ClientOutput, T>) -> T {
             @Sendable
             func makeRequest(for api: API) throws -> URLRequest {
-                do {
-                    let data = try authenticatedRouter.print(.init(auth: auth, api: api))
-                    
-                    guard let request = URLRequest(data: data) else {
-                        throw Error.requestError
-                    }
-                    
-                    return request
-                } catch {
-                    throw Error.printError
+                let data = try authenticatedRouter.print(.init(auth: auth, api: api))
+                
+                guard let request = URLRequest(data: data) else {
+                    throw Error.requestError
                 }
+                
+                return request
             }
             
             return withEscapedDependencies { dependencies in
-                 buildClient { api in
-                     try dependencies.yield {
+                buildClient { api in
+                    try dependencies.yield {
                         try makeRequest(for: api)
                     }
                 }[keyPath: keyPath]
