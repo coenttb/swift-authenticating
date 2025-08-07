@@ -30,6 +30,7 @@ import Dependencies
 /// // Access the router for URL generation
 /// let url = mailgun.router.url(for: .getMessage(id: "123"))
 /// ```
+@dynamicMemberLookup
 public struct Authenticating<
     Auth: Equatable & Sendable,
     AuthRouter: ParserPrinter & Sendable,
@@ -43,7 +44,7 @@ public struct Authenticating<
     AuthRouter.Output == Auth
 {
     /// The authenticated client for making API requests
-    public let client: Client
+    public let client: ClientOutput
     
     /// The router for URL generation and request building
     public let router: Router
@@ -69,13 +70,17 @@ public struct Authenticating<
             router: apiRouter,
             authRouter: authRouter,
             buildClient: buildClient
-        )
+        ).client
         
         self.router = Router(
             baseURL: baseURL,
             authRouter: authRouter,
             router: apiRouter
         )
+    }
+    
+    public subscript<T>(dynamicMember keyPath: KeyPath<ClientOutput, T>) -> T {
+        self.client[keyPath: keyPath]
     }
 }
 
