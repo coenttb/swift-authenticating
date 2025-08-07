@@ -83,6 +83,14 @@ let package = Package(
                 .authenticatingEmailAddress
             ]
         ),
+        .testTarget(
+            name: .authenticating.tests,
+            dependencies: [
+                .authenticating,
+                .dependencies,
+                .product(name: "DependenciesMacros", package: "swift-dependencies")
+            ]
+        ),
     ],
     swiftLanguageModes: [.v6]
 )

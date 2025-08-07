@@ -54,25 +54,14 @@ extension Authenticating {
     /// The client uses `@dynamicMemberLookup` to provide direct access to the underlying
     /// client's methods and properties, making authenticated requests feel natural.
     @dynamicMemberLookup
-    public struct Client<
-        AuthRouter: ParserPrinter & Sendable,
-        API: Equatable & Sendable,
-        APIRouter: ParserPrinter & Sendable,
-        ClientOutput: Sendable
-    >: Sendable
-    where
-    APIRouter.Input == URLRequestData,
-    APIRouter.Output == API,
-    AuthRouter.Input == URLRequestData,
-    AuthRouter.Output == Auth
-    {
+    public struct Client: Sendable {
         
         private let baseURL: URL
         private let auth: Auth
         
         private let router: APIRouter
         private let buildClient: @Sendable (@escaping @Sendable (API) throws -> URLRequest) -> ClientOutput
-        private let authenticatedRouter: Authenticating<Auth>.API<API>.Router<AuthRouter, APIRouter>
+        private let authenticatedRouter: Router
         
         /// Creates a new authenticated client.
         ///
@@ -93,7 +82,7 @@ extension Authenticating {
             self.auth = auth
             self.router = router
             self.buildClient = buildClient
-            self.authenticatedRouter = Authenticating.API.Router(
+            self.authenticatedRouter = Router(
                 baseURL: baseURL,
                 authRouter: authRouter,
                 router: router
@@ -102,15 +91,15 @@ extension Authenticating {
         
         /// Provides dynamic access to the underlying client's properties and methods.
         ///
-        /// This subscript automatically wraps all API calls with authentication,
-        /// ensuring that every request includes the necessary authentication headers.
+        /// This allows you to access closure properties directly on the authenticated client:
         ///
-        /// - Parameter keyPath: The key path to a property or method on the underlying client.
-        /// - Returns: The value at the specified key path, with authentication automatically applied.
+        /// ```swift
+        /// let response = try await authenticatedClient.send(.getUser(id: "123"))
+        /// ```
         public subscript<T>(dynamicMember keyPath: KeyPath<ClientOutput, T>) -> T {
             @Sendable
             func makeRequest(for api: API) throws -> URLRequest {
-                let data = try authenticatedRouter.print(.init(auth: auth, api: api))
+                let data = try authenticatedRouter.print(Authenticating.API(auth: auth, api: api))
                 
                 guard let request = URLRequest(data: data) else {
                     throw Error.requestError
@@ -125,6 +114,37 @@ extension Authenticating {
                         try makeRequest(for: api)
                     }
                 }[keyPath: keyPath]
+            }
+        }
+        
+        /// Provides access to the underlying client with all authentication automatically applied.
+        ///
+        /// This computed property returns the client instance with authentication headers
+        /// automatically injected into every request. This allows you to call methods
+        /// with proper parameter labels:
+        ///
+        /// ```swift
+        /// // With proper method syntax:
+        /// let response = try await authenticatedClient.client.send(request)
+        /// ```
+        public var client: ClientOutput {
+            @Sendable
+            func makeRequest(for api: API) throws -> URLRequest {
+                let data = try authenticatedRouter.print(Authenticating.API(auth: auth, api: api))
+                
+                guard let request = URLRequest(data: data) else {
+                    throw Error.requestError
+                }
+                
+                return request
+            }
+            
+            return withEscapedDependencies { dependencies in
+                buildClient { api in
+                    try dependencies.yield {
+                        try makeRequest(for: api)
+                    }
+                }
             }
         }
     }
@@ -143,7 +163,7 @@ public enum Error: Swift.Error {
 
 // MARK: - Bearer Authentication Conveniences
 
-extension Authenticating.Client {
+extension AuthenticatingClient where Auth == BearerAuth {
     /// Creates a new client with Bearer token authentication.
     ///
     /// This convenience initializer is available when using Bearer authentication
@@ -199,7 +219,7 @@ extension Authenticating.Client where APIRouter: TestDependencyKey, APIRouter.Va
 
 // MARK: - Basic Authentication Conveniences
 
-extension Authenticating.Client {
+extension AuthenticatingClient where Auth == BasicAuth {
     /// Creates a new client with Basic authentication.
     ///
     /// This convenience initializer is available when using Basic authentication

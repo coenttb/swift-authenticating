@@ -43,21 +43,19 @@ extension Authenticating {
     ///     api: MyAPI.getUser(id: "123")
     /// )
     /// ```
-    public struct API<
-        OtherAPI: Equatable & Sendable
-    >: Equatable & Sendable {
+    public struct API: Equatable & Sendable {
         /// The authentication credentials.
         public let auth: Auth
         
         /// The API route or request.
-        public let api: OtherAPI
+        public let api: API
         
         /// Creates a new authenticated API instance.
         ///
         /// - Parameters:
         ///   - auth: The authentication credentials to use.
         ///   - api: The API route or request to authenticate.
-        public init(auth: Auth, api: OtherAPI) {
+        public init(auth: Auth, api: API) {
             self.auth = auth
             self.api = api
         }
@@ -73,13 +71,13 @@ extension Authenticating.API where Auth == BearerAuth {
     ///   - apiKey: The API key to use as the Bearer token.
     ///   - api: The API route or request to authenticate.
     /// - Throws: An error if the API key is invalid.
-    public init(apiKey: String, api: OtherAPI) throws {
+    public init(apiKey: String, api: API) throws {
         self.auth = try .init(token: apiKey)
         self.api = api
     }
 }
 
-extension Authenticating.API {
+extension Authenticating {
     /// A router that combines authentication routing with API routing.
     ///
     /// ``Router`` handles the parsing and printing of authenticated API requests,
@@ -107,16 +105,7 @@ extension Authenticating.API {
     /// )
     /// let request = try router.request(for: api)
     /// ```
-    public struct Router<
-        AuthRouter: ParserPrinter & Sendable,
-        OtherAPIRouter: ParserPrinter & Sendable
-    >: ParserPrinter, Sendable
-    where
-    OtherAPIRouter.Input == URLRequestData,
-    OtherAPIRouter.Output == OtherAPI,
-    AuthRouter.Input == URLRequestData,
-    AuthRouter.Output == Auth
-    {
+    public struct Router: ParserPrinter, Sendable {
         
         /// The base URL for all API requests.
         let baseURL: URL
@@ -125,7 +114,7 @@ extension Authenticating.API {
         let authRouter: AuthRouter
         
         /// The router responsible for handling API routes.
-        let router: OtherAPIRouter
+        let router: APIRouter
         
         /// Creates a new authenticated API router.
         ///
@@ -136,22 +125,22 @@ extension Authenticating.API {
         public init(
             baseURL: URL,
             authRouter: AuthRouter,
-            router: OtherAPIRouter
+            router: APIRouter
         ) {
             self.baseURL = baseURL
             self.authRouter = authRouter
             self.router = router
         }
         
-        /// The router body that combines authentication and API routing.
-        public var body: some URLRouting.Router<Authenticating<Auth>.API<OtherAPI>> {
-            Parse(.memberwise(Authenticating<Auth>.API<OtherAPI>.init)) {
-                authRouter
-                
-                router
-            }
-            .baseURL(self.baseURL.absoluteString)
+    /// The router body that combines authentication and API routing.
+    public var body: some URLRouting.Router<Authenticating.API> {
+        Parse(.memberwise(Authenticating.API.init)) {
+            authRouter
+            
+            router
         }
+        .baseURL(self.baseURL.absoluteString)
     }
+}
 }
 
