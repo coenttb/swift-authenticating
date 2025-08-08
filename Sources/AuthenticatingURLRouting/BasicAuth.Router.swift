@@ -9,6 +9,10 @@ import Foundation
 import RFC_7617
 import URLRouting
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 extension RFC_7617.Basic {
     /// A URL router for HTTP Basic Authentication (RFC 7617).
     ///

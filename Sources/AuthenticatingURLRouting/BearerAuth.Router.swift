@@ -9,6 +9,10 @@ import Foundation
 import RFC_6750
 import URLRouting
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 extension RFC_6750.Bearer {
     /// A URL router for OAuth 2.0 Bearer Token Authentication (RFC 6750).
     ///

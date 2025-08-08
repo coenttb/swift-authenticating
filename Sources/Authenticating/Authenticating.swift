@@ -9,6 +9,10 @@ import Foundation
 import URLRouting
 import Dependencies
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 /// A generic struct for authentication-related functionality.
 ///
 /// ``Authenticating`` provides both client and router properties for authenticated API access,
