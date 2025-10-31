@@ -45,7 +45,7 @@ struct ClientErgonomicsExample {
     func testImprovedErgonomics() async throws {
         let baseURL = URL(string: "https://api.example.com")!
         let token = "test-token"
-        
+
         // Create authenticated client
         let authenticatedClient = try AuthenticatingClient<
             BearerAuth,
@@ -57,7 +57,10 @@ struct ClientErgonomicsExample {
             baseURL: baseURL,
             token: token,
             buildClient: { _ in
-                APIClient()
+                APIClient(
+                    getUser: { _ in "mock-user" },
+                    listMessages: { _ in [] }
+                )
             }
         )
         
@@ -78,7 +81,7 @@ struct ClientErgonomicsExample {
     func testBothApproachesWork() async throws {
         let baseURL = URL(string: "https://api.example.com")!
         let token = "test-token"
-        
+
         let authenticatedClient = try AuthenticatingClient<
             BearerAuth,
             BearerAuth.Router,
@@ -89,7 +92,10 @@ struct ClientErgonomicsExample {
             baseURL: baseURL,
             token: token,
             buildClient: { _ in
-                APIClient()
+                APIClient(
+                    getUser: { _ in "mock-user" },
+                    listMessages: { _ in [] }
+                )
             }
         )
         
