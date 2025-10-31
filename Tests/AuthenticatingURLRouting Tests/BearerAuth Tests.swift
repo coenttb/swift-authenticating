@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  BearerAuth Tests.swift
 //  swift-authenticating
 //
 //  Created by Coen ten Thije Boonkkamp on 03/01/2025.

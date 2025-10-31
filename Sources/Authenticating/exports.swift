@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  coenttb-authentication
+//  exports.swift
+//  swift-authenticating
 //
 //  Created by Coen ten Thije Boonkkamp on 23/01/2025.
 //

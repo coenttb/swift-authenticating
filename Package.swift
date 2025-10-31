@@ -80,7 +80,8 @@ let package = Package(
         .testTarget(
             name: .authenticatingEmailAddress.tests,
             dependencies: [
-                .authenticatingEmailAddress
+                .authenticatingEmailAddress,
+                .authenticatingURLRouting
             ]
         ),
         .testTarget(

@@ -1,8 +1,8 @@
 //
-//  File.swift
-//  coenttb-authentication
+//  Authenticating.swift
+//  swift-authenticating
 //
-//  Created by Coen ten Thije Boonkkamp on 05/08/2025.
+//  Created by Coen ten Thije Boonkkamp on 05/08/2024.
 //
 
 import Foundation

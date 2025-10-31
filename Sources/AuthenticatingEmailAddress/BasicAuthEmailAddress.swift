@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  swift-basic-auth
+//  BasicAuthEmailAddress.swift
+//  swift-authenticating
 //
 //  Created by Coen ten Thije Boonkkamp on 20/12/2024.
 //

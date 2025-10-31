@@ -1,8 +1,8 @@
 //
-//  File.swift
+//  Authenticating Tests.swift
 //  swift-authenticating
 //
-//  Created by Coen ten Thije Boonkkamp on 24/07/2025.
+//  Created by Coen ten Thije Boonkkamp on 24/07/2024.
 //
 
 import Testing
@@ -79,7 +79,7 @@ struct AuthenticatingClientTests {
         let baseURL = URL(string: "https://api.example.com")!
         let username = "testuser"
         let password = "testpass"
-        
+
         let client = try AuthenticatingClient<
             BasicAuth,
             BasicAuth.Router,
@@ -94,20 +94,21 @@ struct AuthenticatingClientTests {
                 MockClient(makeRequest: makeRequest)
             }
         )
-        
-//        let request = try client.client.execute(.deleteAccount)
-        
+
+        // Test with existing TestAPI endpoint
+        let request = try client.client.execute(.getUser(id: "123"))
+
         let expectedAuth = Data("\(username):\(password)".utf8).base64EncodedString()
-//        #expect(request.url?.absoluteString == "https://api.example.com/account")
-//        #expect(request.httpMethod == "DELETE")
-//        #expect(request.allHTTPHeaderFields?["Authorization"] == "Basic \(expectedAuth)")
+        #expect(request.url?.absoluteString == "https://api.example.com/users/123")
+        #expect(request.httpMethod == "GET")
+        #expect(request.allHTTPHeaderFields?["Authorization"] == "Basic \(expectedAuth)")
     }
     
     @Test("Client correctly routes different API endpoints")
     func testClientRoutingDifferentEndpoints() throws {
         let baseURL = URL(string: "https://api.example.com")!
         let token = "test-token"
-        
+
         let client = try AuthenticatingClient<
             BearerAuth,
             BearerAuth.Router,
@@ -121,19 +122,18 @@ struct AuthenticatingClientTests {
                 MockClient(makeRequest: makeRequest)
             }
         )
-        
+
         let getUserRequest = try client.client.execute(.getUser(id: "123"))
         #expect(getUserRequest.url?.path == "/users/123")
         #expect(getUserRequest.httpMethod == "GET")
-        
-       
+        #expect(getUserRequest.allHTTPHeaderFields?["Authorization"] == "Bearer test-token")
     }
     
     @Test("Client preserves authentication across multiple requests")
     func testClientPreservesAuthenticationAcrossRequests() throws {
         let baseURL = URL(string: "https://api.example.com")!
         let token = "persistent-token"
-        
+
         let mock = try AuthenticatingClient<
             BearerAuth,
             BearerAuth.Router,
@@ -147,14 +147,14 @@ struct AuthenticatingClientTests {
                 MockClient(makeRequest: makeRequest)
             }
         )
-        
+
         let request1 = try mock.client.execute(.getUser(id: "1"))
         let request2 = try mock.client.execute(.getUser(id: "2"))
-//        let request3 = try mock.client.execute(.deleteAccount)
-        
+        let request3 = try mock.client.execute(.getUser(id: "3"))
+
         #expect(request1.allHTTPHeaderFields?["Authorization"] == "Bearer persistent-token")
         #expect(request2.allHTTPHeaderFields?["Authorization"] == "Bearer persistent-token")
-//        #expect(request3.allHTTPHeaderFields?["Authorization"] == "Bearer persistent-token")
+        #expect(request3.allHTTPHeaderFields?["Authorization"] == "Bearer persistent-token")
     }
     
     @Test("Invalid Bearer token throws error")
@@ -208,7 +208,7 @@ struct AuthenticatingClientTests {
     func testClientEncodesRequestBody() throws {
         let baseURL = URL(string: "https://api.example.com")!
         let token = "test-token"
-        
+
         let client = try AuthenticatingClient<
             BearerAuth,
             BearerAuth.Router,
@@ -222,16 +222,12 @@ struct AuthenticatingClientTests {
                 MockClient(makeRequest: makeRequest)
             }
         )
-        
-//        let request = try client.client.execute(.updateProfile(name: "John Doe"))
-        
-//        #expect(request.httpMethod == "POST")
-//        #expect(request.httpBody != nil)
-        
-//        if let body = request.httpBody {
-//            let decoded = try JSONDecoder().decode(UpdateProfileRequest.self, from: body)
-//            #expect(decoded.name == "John Doe")
-//        }
+
+        // TODO: Add test for request body encoding when TestAPI includes a POST endpoint
+        // For now, verify that basic request creation works
+        let request = try client.client.execute(.getUser(id: "123"))
+        #expect(request.url != nil)
+        #expect(request.allHTTPHeaderFields?["Authorization"] == "Bearer test-token")
     }
     
     @Test("Client handles baseURL with trailing slash")

@@ -1,13 +1,12 @@
 //
-//  File.swift
-//  coenttb-mailgun
+//  Authenticating Client.swift
+//  swift-authenticating
 //
 //  Created by Coen ten Thije Boonkkamp on 20/12/2024.
 //
 import URLRouting
 import Foundation
 import Dependencies
-import URLRouting
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking

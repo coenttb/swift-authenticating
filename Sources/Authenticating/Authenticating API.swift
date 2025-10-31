@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  coenttb-stripe
+//  Authenticating API.swift
+//  swift-authenticating
 //
 //  Created by Coen ten Thije Boonkkamp on 05/01/2025.
 //

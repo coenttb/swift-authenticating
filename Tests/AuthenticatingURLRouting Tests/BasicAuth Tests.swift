@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  swift-basic-auth
+//  BasicAuth Tests.swift
+//  swift-authenticating
 //
 //  Created by Coen ten Thije Boonkkamp on 20/12/2024.
 //
