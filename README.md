@@ -176,12 +176,22 @@ Email address support for authentication:
 
 ## Related Packages
 
-- [coenttb-mailgun](https://github.com/coenttb/coenttb-mailgun) - A Swift package for Mailgun integration with Vapor.
-- [swift-url-routing](https://github.com/pointfreeco/swift-url-routing) - A bidirectional router with more type safety and less fuss.
-- [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) - A dependency management library inspired by SwiftUI's "environment."
-- [swift-emailaddress-type](https://github.com/coenttb/swift-emailaddress-type) - A Swift package with a type-safe EmailAddress model.
-- [swift-rfc-6750](https://github.com/swift-web-standards/swift-rfc-6750) - Swift implementation of RFC 6750: The OAuth 2.0 Authorization Framework: Bearer Token Usage
-- [swift-rfc-7617](https://github.com/swift-web-standards/swift-rfc-7617) - Swift implementation of RFC 7617: The 'Basic' HTTP Authentication Scheme
+### Dependencies
+
+- [swift-emailaddress-type](https://github.com/coenttb/swift-emailaddress-type): A Swift package with a type-safe EmailAddress model.
+
+### Used By
+
+- [swift-github-live](https://github.com/coenttb/swift-github-live): A Swift package with live implementations for the GitHub API.
+- [swift-identities-types](https://github.com/coenttb/swift-identities-types): A Swift package with foundational types for authentication.
+- [swift-mailgun-live](https://github.com/coenttb/swift-mailgun-live): A Swift package with live implementations for Mailgun.
+- [swift-stripe](https://github.com/coenttb/swift-stripe): The Swift library for the Stripe API.
+- [swift-stripe-live](https://github.com/coenttb/swift-stripe-live): A Swift package with live implementations for the Stripe API.
+
+### Third-Party Dependencies
+
+- [pointfreeco/swift-dependencies](https://github.com/pointfreeco/swift-dependencies): A dependency management library for controlling dependencies in Swift.
+- [pointfreeco/swift-url-routing](https://github.com/pointfreeco/swift-url-routing): A bidirectional URL router with more type safety and less fuss.
 
 ## License
 
