@@ -1,42 +1,42 @@
-# swift-authentication
+# swift-authenticating
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Swift-5.10-orange.svg" alt="Swift 5.10">
-  <img src="https://img.shields.io/badge/Platforms-macOS%20|%20iOS%20|%20tvOS%20|%20watchOS%20|%20Linux-lightgray.svg" alt="Platforms">
-  <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/Release-0.0.1-green.svg" alt="Release">
-</p>
+[![CI](https://github.com/coenttb/swift-authenticating/workflows/CI/badge.svg)](https://github.com/coenttb/swift-authenticating/actions/workflows/ci.yml)
+![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
 
-A Swift package providing type-safe HTTP authentication with URL routing integration. Built on [swift-url-routing](https://github.com/pointfreeco/swift-url-routing) and [swift-dependencies](https://github.com/pointfreeco/swift-dependencies), this package offers a composable and testable approach to API authentication.
+Type-safe HTTP authentication with URL routing integration for Swift.
 
 ## Overview
 
-`swift-authentication` provides foundation authentication types and their associated URL routers, supporting both Basic and Bearer authentication schemes. It's designed to seamlessly integrate with your API clients while maintaining type safety and testability.
+`swift-authenticating` provides type-safe HTTP authentication types and URL routers, supporting both Basic (RFC 7617) and Bearer (RFC 6750) authentication schemes. Built on Point-Free's [swift-url-routing](https://github.com/pointfreeco/swift-url-routing) and [swift-dependencies](https://github.com/pointfreeco/swift-dependencies), it enables composable and testable API authentication patterns.
 
-### Key Features
+## Features
 
-- 🔐 **Type-safe authentication** - Leverage Swift's type system for compile-time safety
-- 🔄 **URL routing integration** - Built on swift-url-routing for seamless request/response handling
-- 🧩 **Composable architecture** - Mix and match authentication with your API definitions
-- 🧪 **Testable** - Full support for swift-dependencies testing patterns
+- Type-safe authentication with compile-time guarantees via Swift's type system
+- URL routing integration via swift-url-routing ParserPrinter protocol
+- RFC 7617 Basic Authentication support with base64 credential encoding
+- RFC 6750 Bearer Token Authentication support
+- Email address support for Basic Authentication via EmailAddress type
+- Generic Authenticating struct for custom authentication schemes
+- Full swift-dependencies integration for testability
+- Swift 6.0 concurrency support with Sendable conformance
 
 ## Installation
 
-Add `swift-authentication` to your `Package.swift`:
+Add `swift-authenticating` to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/coenttb/swift-authentication", from: "0.0.1")
+    .package(url: "https://github.com/coenttb/swift-authenticating", from: "0.0.1")
 ]
 ```
 
-Then add Authenticating to your target:
+Then add the product to your target:
 
 ```swift
 .target(
     name: "YourTarget",
     dependencies: [
-        .product(name: "Authenticating", package: "swift-authentication")
+        .product(name: "Authenticating", package: "swift-authenticating")
     ]
 )
 ```
@@ -51,9 +51,10 @@ import Authenticating
 // Create basic auth credentials
 let auth = try BasicAuth(username: "api", password: "secret-key")
 
-// Use with URL routing
+// Use with URL routing to generate Authorization header
 let router = BasicAuth.Router()
-let request = try router.request(for: auth, baseURL: URL(string: "https://api.example.com")!)
+let requestData = try router.print(auth)
+// requestData.headers["Authorization"] contains "Basic <base64>"
 ```
 
 ### Bearer Token Authentication
@@ -62,204 +63,130 @@ let request = try router.request(for: auth, baseURL: URL(string: "https://api.ex
 import Authenticating
 
 // Create bearer token
-let auth = BearerAuth(token: "your-api-token")
+let auth = try BearerAuth(token: "your-api-token")
 
-// Use with URL routing
+// Use with URL routing to generate Authorization header
 let router = BearerAuth.Router()
-let request = try router.request(for: auth, baseURL: URL(string: "https://api.example.com")!)
+let requestData = try router.print(auth)
+// requestData.headers["Authorization"] contains "Bearer your-api-token"
 ```
 
 ## Usage Examples
 
-### Creating an Authenticated API Client
+### Email-based Basic Authentication
 
-Here's a real-world example showing how to create an authenticated client for a Mailgun API:
+```swift
+import Authenticating
+
+let email = try EmailAddress("user@example.com")
+let auth = try BasicAuth(emailAddress: email, password: "password123")
+```
+
+### Creating an Authenticated Client
 
 ```swift
 import Authenticating
 import Dependencies
 import URLRouting
 
-// Define your authenticated client type
-public typealias AuthenticatedClient<
-    API: Equatable & Sendable,
-    APIRouter: ParserPrinter & Sendable,
-    Client: Sendable
-> = Authenticating<BasicAuth>.Client<
-    BasicAuth.Router,
-    API,
-    APIRouter,
-    Client
-> where APIRouter.Output == API, APIRouter.Input == URLRequestData
-
-// Create convenience initializer
-extension AuthenticatedClient {
-    public init(
-        apiKey: ApiKey,
-        router: APIRouter,
-        buildClient: @escaping @Sendable (API) throws -> URLRequest) -> ClientOutput
-    ) throws where Auth == BasicAuth, AuthRouter == BasicAuth.Router {
-        @Dependency(\.envVars.baseUrl) var baseUrl
-        
-        self = .init(
-            baseURL: baseUrl,
-            auth: try .init(username: "api", password: apiKey.rawValue),
-            router: router,
-            authRouter: BasicAuth.Router(),
-            buildClient: buildClient
-        )
-    }
-}
-```
-
-### Email-based Authentication
-
-```swift
-import AuthenticatingEmailAddress
-import EmailAddress
-
-// Use email address for basic auth
-let email = try EmailAddress("user@example.com")
-let auth = try BasicAuth(emailAddress: email, password: "password123")
-```
-
-### Integrating with Your API
-
-```swift
 // Define your API routes
 enum MyAPI: Equatable {
     case getUser(id: String)
-    case updateProfile(Profile)
-    case deleteAccount
+    case updateProfile(name: String)
 }
 
-// Create authenticated API type
-typealias AuthenticatedAPI = Authenticating<BasicAuth>.API<MyAPI>
+// Create router for your API
+struct MyAPIRouter: ParserPrinter {
+    var body: some URLRouting.Router<MyAPI> {
+        OneOf {
+            Route(.case(MyAPI.getUser)) {
+                Path { "users"; Parse(.string) }
+            }
+            Route(.case(MyAPI.updateProfile)) {
+                Method.post
+                Path { "profile" }
+                Body(.form(name: .string))
+            }
+        }
+    }
+}
 
-// Build your client
-let client = try AuthenticatedClient(
-    apiKey: apiKey,
-    router: myAPIRouter,
-    buildClient: { api in
-        // Your client implementation
+// Create authenticated client
+let authenticating = try Authenticating(
+    baseURL: URL(string: "https://api.example.com")!,
+    username: "api",
+    password: "secret-key",
+    buildClient: { requestBuilder in
+        // Return your client implementation
+        // requestBuilder closure converts MyAPI -> URLRequest
+        return myClientImplementation
     }
 )
+
+// Access client and router
+let client = authenticating.client
+let router = authenticating.router
 ```
 
-## Module Overview
-
-### Authenticating
-
-The core module providing:
-- `Authenticating<Auth>` - Generic namespace for authentication types
-- `Authenticating.API` - Combines authentication with your API types
-- `Authenticating.Client` - Dynamic client with automatic authentication
-
-### AuthenticatingURLRouting
-
-URL routing implementations for authentication schemes:
-- `BasicAuth.Router` - RFC 7617 Basic Authentication routing
-- `BearerAuth.Router` - RFC 6750 Bearer Token routing
-- Integration with `swift-url-routing` for request/response handling
-
-### AuthenticatingEmailAddress
-
-Extensions for email-based authentication:
-- Email address support for Basic Authentication
-- Integration with `swift-emailaddress-type`
-
-## Advanced Usage
-
-### Custom Authentication Schemes
-
-You can extend the package with custom authentication schemes:
+### API Key Authentication (Mailgun-style)
 
 ```swift
 import Authenticating
 
-// Define your custom auth type
-struct CustomAuth: Equatable, Sendable {
-    let token: String
-    let signature: String
-}
-
-// Create router implementation
-extension CustomAuth {
-    struct Router: ParserPrinter {
-        // Implementation details...
+// Many APIs use "api" as username with API key as password
+let authenticating = try Authenticating(
+    baseURL: URL(string: "https://api.mailgun.net")!,
+    apiKey: "key-1234567890abcdef",
+    buildClient: { requestBuilder in
+        // Build your client
+        return mailgunClient
     }
-}
-
-// Use with Authenticating types
-typealias CustomAuthClient = Authenticating<CustomAuth>.Client<
-    CustomAuth.Router,
-    MyAPI,
-    MyAPI.Router,
-    MyClient
->
+)
 ```
 
-### Testing
+## Module Reference
 
-The package is designed with testing in mind using `swift-dependencies`:
+### Authenticating
 
-```swift
-import Dependencies
-import Testing
+Core module providing generic authentication types:
 
-@Suite("My Client Tests")
-struct MyClientTests {
-    @Test
-    func testAuthenticatedRequest() async throws {
-        @Dependency(\.client) var client
-        let response = await client.get("foo")
-    }
-}
+- `Authenticating<Auth, AuthRouter, API, APIRouter, ClientOutput>` - Generic authentication container with client and router
+- `BasicAuth` - Type alias for RFC_7617.Basic
+- `BearerAuth` - Type alias for RFC_6750.Bearer
 
-// uses testValue in tests. Or set DependencyValues \.context to .live for a live client.
-```
+### AuthenticatingURLRouting
 
-### Environment Configuration
+URL routing implementations for authentication schemes:
 
-Use environment variables for configuration:
+- `BasicAuth.Router` - ParserPrinter for RFC 7617 Basic Authentication
+- `BasicAuth.ParserPrinter` - Credential encoding/decoding for Basic auth
+- `BearerAuth.Router` - ParserPrinter for RFC 6750 Bearer Token authentication
+- `BearerAuth.ParserPrinter` - Token encoding/decoding for Bearer auth
 
-```swift
-// in your code:
-extension AuthenticatedClient {
-    init(
-        buildClient: @escaping @Sendable (API) throws -> URLRequest) -> ClientOutput
-    ) throws {
-        @Dependency(\.envVars) var envVars
-        @Dependency(\.router) var router
-        let apiKey = envVars.apiKey
-        
-        self = try AuthenticatedClient(
-            apiKey: apiKey,
-            router: router,
-            buildClient: buildClient
-        )
-    }
-}
-```
+### AuthenticatingEmailAddress
+
+Email address support for authentication:
+
+- `BasicAuth.init(emailAddress:password:)` - Convenience initializer using EmailAddress as username
 
 ## Requirements
 
-- **Swift** 6.0+
-- **macOS** 14.0+ / **iOS** 17.0+
-- **Dependencies**:
+- Swift 6.0+
+- macOS 14.0+ / iOS 17.0+
 
-## Related Projects
+## Related Packages
 
-- [coenttb-mailgun](https://github.com/coenttb/coenttb-mailgun) - Uses swift-authenticating to parse and print the URLRequest in a mailgun-compliant format.
+- [coenttb-mailgun](https://github.com/coenttb/coenttb-mailgun) - A comprehensive Swift SDK for the Mailgun API with type-safe domain modeling and structured concurrency.
+- [swift-url-routing](https://github.com/pointfreeco/swift-url-routing) - A bidirectional router with more type safety and less fuss.
+- [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) - A dependency management library inspired by SwiftUI's Environment.
+- [swift-emailaddress-type](https://github.com/coenttb/swift-emailaddress-type) - Type-safe email address handling for Swift.
+- [swift-rfc-6750](https://github.com/swift-web-standards/swift-rfc-6750) - RFC 6750 Bearer Token implementation.
+- [swift-rfc-7617](https://github.com/swift-web-standards/swift-rfc-7617) - RFC 7617 Basic Authentication implementation.
 
 ## License
 
-This project is licensed under the **Apache 2.0 License**. See the [LICENSE](LICENSE).
+This project is licensed under the Apache 2.0 License. See [LICENSE](LICENSE) for details.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Status
-
-This package is under active development. Expect frequent changes until version 1.0.0.
+Contributions are welcome. Please open an issue or pull request.
