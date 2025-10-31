@@ -326,22 +326,22 @@ struct AuthenticatingAPITests {
     @Test("API combines auth with route correctly")
     func testAPICombinesAuthWithRoute() throws {
         let auth = try BearerAuth(token: "api-key-123")
-        let api = AuthenticatingAPI<BearerAuth, TestAPI>(
+        let api = Authenticating<BearerAuth, BearerAuth.Router, TestAPI, TestRouter, Never>.API(
             auth: auth,
             api: TestAPI.fetch(id: 42)
         )
-        
+
         #expect(api.auth.token == "api-key-123")
         #expect(api.api == TestAPI.fetch(id: 42))
     }
     
     @Test("API convenience initializer with apiKey works")
     func testAPIConvenienceInitializerWithApiKey() throws {
-        let api = try AuthenticatingAPI<BearerAuth, TestAPI>(
+        let api = try Authenticating<BearerAuth, BearerAuth.Router, TestAPI, TestRouter, Never>.API(
             apiKey: "convenience-key",
             api: TestAPI.create(name: "Test")
         )
-        
+
         #expect(api.auth.token == "convenience-key")
         #expect(api.api == TestAPI.create(name: "Test"))
     }
@@ -349,20 +349,20 @@ struct AuthenticatingAPITests {
     @Test("API Router creates proper request")
     func testAPIRouterCreatesProperRequest() throws {
         let baseURL = URL(string: "https://api.example.com")!
-        let router = AuthenticatingAPIRouter<BearerAuth, BearerAuth.Router, TestAPI, TestRouter>(
+        let router = Authenticating<BearerAuth, BearerAuth.Router, TestAPI, TestRouter, Never>.Router(
             baseURL: baseURL,
             authRouter: BearerAuth.Router(),
             router: TestRouter()
         )
-        
+
         let auth = try BearerAuth(token: "test-token")
-        let api = AuthenticatingAPI<BearerAuth, TestAPI>(
+        let api = Authenticating<BearerAuth, BearerAuth.Router, TestAPI, TestRouter, Never>.API(
             auth: auth,
             api: TestAPI.fetch(id: 99)
         )
-        
+
         let requestData = try router.print(api)
-        
+
         #expect(requestData.headers["Authorization"]?.first == "Bearer test-token")
         #expect(requestData.path == ["items", "99"])
         #expect(requestData.method == "GET")
@@ -394,12 +394,12 @@ struct AuthenticatingAPITests {
         let auth1 = try BearerAuth(token: "token-abc")
         let auth2 = try BearerAuth(token: "token-abc")
         let auth3 = try BearerAuth(token: "token-xyz")
-        
-        let api1 = AuthenticatingAPI<BearerAuth, TestAPI>(auth: auth1, api: TestAPI.fetch(id: 1))
-        let api2 = AuthenticatingAPI<BearerAuth, TestAPI>(auth: auth2, api: TestAPI.fetch(id: 1))
-        let api3 = AuthenticatingAPI<BearerAuth, TestAPI>(auth: auth3, api: TestAPI.fetch(id: 1))
-        let api4 = AuthenticatingAPI<BearerAuth, TestAPI>(auth: auth1, api: TestAPI.fetch(id: 2))
-        
+
+        let api1 = Authenticating<BearerAuth, BearerAuth.Router, TestAPI, TestRouter, Never>.API(auth: auth1, api: TestAPI.fetch(id: 1))
+        let api2 = Authenticating<BearerAuth, BearerAuth.Router, TestAPI, TestRouter, Never>.API(auth: auth2, api: TestAPI.fetch(id: 1))
+        let api3 = Authenticating<BearerAuth, BearerAuth.Router, TestAPI, TestRouter, Never>.API(auth: auth3, api: TestAPI.fetch(id: 1))
+        let api4 = Authenticating<BearerAuth, BearerAuth.Router, TestAPI, TestRouter, Never>.API(auth: auth1, api: TestAPI.fetch(id: 2))
+
         #expect(api1 == api2)
         #expect(api1 != api3)
         #expect(api1 != api4)

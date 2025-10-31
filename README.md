@@ -176,12 +176,12 @@ Email address support for authentication:
 
 ## Related Packages
 
-- [coenttb-mailgun](https://github.com/coenttb/coenttb-mailgun) - A comprehensive Swift SDK for the Mailgun API with type-safe domain modeling and structured concurrency.
+- [coenttb-mailgun](https://github.com/coenttb/coenttb-mailgun) - A Swift package for Mailgun integration with Vapor.
 - [swift-url-routing](https://github.com/pointfreeco/swift-url-routing) - A bidirectional router with more type safety and less fuss.
-- [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) - A dependency management library inspired by SwiftUI's Environment.
-- [swift-emailaddress-type](https://github.com/coenttb/swift-emailaddress-type) - Type-safe email address handling for Swift.
-- [swift-rfc-6750](https://github.com/swift-web-standards/swift-rfc-6750) - RFC 6750 Bearer Token implementation.
-- [swift-rfc-7617](https://github.com/swift-web-standards/swift-rfc-7617) - RFC 7617 Basic Authentication implementation.
+- [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) - A dependency management library inspired by SwiftUI's "environment."
+- [swift-emailaddress-type](https://github.com/coenttb/swift-emailaddress-type) - A Swift package with a type-safe EmailAddress model.
+- [swift-rfc-6750](https://github.com/swift-web-standards/swift-rfc-6750) - Swift implementation of RFC 6750: The OAuth 2.0 Authorization Framework: Bearer Token Usage
+- [swift-rfc-7617](https://github.com/swift-web-standards/swift-rfc-7617) - Swift implementation of RFC 7617: The 'Basic' HTTP Authentication Scheme
 
 ## License
 
